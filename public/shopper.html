@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartScan Go - Shopper Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- QRCode.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  
+  <style>
+    :root {
+      --bg-dark: #0f131f;
+      --bg-card: #181d2e;
+      --bg-input: #22293f;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-color: #6366f1;
+      --accent-glow: 0 0 15px rgba(99, 102, 241, 0.3);
+      --success-color: #10b981;
+      --success-glow: 0 0 15px rgba(16, 185, 129, 0.3);
+      --warning-color: #f59e0b;
+      --text-main: #f1f5f9;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header styling */
+    .app-header {
+      padding: 16px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .app-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-logo {
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 12px;
+      color: white;
+    }
+
+    .header-badge {
+      font-size: 10px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #818cf8;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    /* Main viewport */
+    .app-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      position: relative;
+    }
+
+    /* Browse/Catalog Grid */
+    .catalog-section h2 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 80px;
+    }
+
+    .product-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(99, 102, 241, 0.4);
+    }
+
+    .product-card:active {
+      transform: scale(0.97);
+    }
+
+    .product-image-placeholder {
+      height: 80px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .product-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .product-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .product-category {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .product-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .product-price {
+      font-weight: 700;
+      font-size: 14px;
+      color: #818cf8;
+    }
+
+    .add-button {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .product-card:hover .add-button {
+      background: var(--accent-color);
+      color: white;
+    }
+
+    /* Scanner View styles */
+    .scan-section {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      margin-bottom: 80px;
+    }
+
+    .scan-section.active {
+      display: flex;
+    }
+
+    .scanner-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .scanner-viewfinder {
+      position: relative;
+      height: 220px;
+      background: #080b11;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .viewfinder-bracket {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: var(--accent-color);
+      border-style: solid;
+      border-width: 0;
+      z-index: 15;
+    }
+    .viewfinder-bracket.top-left { top: 24px; left: 24px; border-top-width: 3px; border-left-width: 3px; }
+    .viewfinder-bracket.top-right { top: 24px; right: 24px; border-top-width: 3px; border-right-width: 3px; }
+    .viewfinder-bracket.bottom-left { bottom: 24px; left: 24px; border-bottom-width: 3px; border-left-width: 3px; }
+    .viewfinder-bracket.bottom-right { bottom: 24px; right: 24px; border-bottom-width: 3px; border-right-width: 3px; }
+
+    .scanner-laser {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #ef4444;
+      box-shadow: 0 0 10px #ef4444, 0 0 20px rgba(239, 68, 68, 0.5);
+      animation: laser-scan 2s linear infinite;
+      z-index: 10;
+    }
+
+    @keyframes laser-scan {
+      0% { top: 24px; }
+      50% { top: 196px; }
+      100% { top: 24px; }
+    }
+
+    .scanner-target-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      text-align: center;
+      gap: 12px;
+      z-index: 5;
+    }
+
+    .scanner-target-display .target-emoji {
+      font-size: 56px;
+      animation: target-float 2s ease-in-out infinite;
+    }
+
+    @keyframes target-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .pulse-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      animation: pulse-text-opacity 1.5s infinite;
+    }
+
+    @keyframes pulse-text-opacity {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .scanner-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .scanner-controls label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .scanner-select-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .scanner-select-row select {
+      flex: 1;
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .scanner-action-btn {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: var(--accent-glow);
+      transition: background 0.2s;
+    }
+
+    .scanner-action-btn:hover {
+      background: #4f46e5;
+    }
+
+    .quick-scan-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .quick-scan-list {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0;
+      scrollbar-width: none;
+    }
+
+    .quick-scan-list::-webkit-scrollbar {
+      display: none;
+    }
+
+    .quick-scan-item {
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      white-space: nowrap;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    }
+
+    .quick-scan-item:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: var(--accent-color);
+      transform: translateY(-1px);
+    }
+
+    .quick-scan-item:active {
+      transform: translateY(1px);
+    }
+
+    /* Cart view styling */
+    .cart-section {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      height: 100%;
+      margin-bottom: 80px;
+    }
+
+    .cart-section.active {
+      display: flex;
+    }
+
+    .cart-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: var(--text-muted);
+      height: 250px;
+      text-align: center;
+    }
+
+    .cart-empty-icon {
+      font-size: 48px;
+    }
+
+    .cart-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cart-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cart-item-emoji {
+      font-size: 24px;
+      background: var(--bg-input);
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cart-item-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cart-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cart-item-price {
+      font-size: 12px;
+      color: #818cf8;
+      font-weight: 700;
+    }
+
+    .cart-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-input);
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .qty-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qty-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .qty-val {
+      font-size: 12px;
+      font-weight: 600;
+      width: 16px;
+      text-align: center;
+    }
+
+    /* Checkout panel */
+    .summary-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+    }
+
+    .summary-total {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      border-top: 1px dashed var(--border-color);
+      padding-top: 8px;
+    }
+
+    .pay-button {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: var(--accent-glow);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .pay-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .pay-button:active {
+      transform: translateY(1px);
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 19, 31, 0.95);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .loading-overlay.active {
+      display: flex;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(99, 102, 241, 0.1);
+      border-left-color: var(--accent-color);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Receipt Screen */
+    .receipt-section {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .receipt-section.active {
+      display: flex;
+    }
+
+    .receipt-card {
+      background: white;
+      color: #0f172a;
+      width: 100%;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .receipt-card::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(-45deg, transparent 4px, white 0),
+                  linear-gradient(45deg, transparent 4px, white 0);
+      background-size: 8px 12px;
+      background-repeat: repeat-x;
+    }
+
+    .receipt-header {
+      text-align: center;
+      border-bottom: 1px dashed #cbd5e1;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+
+    .receipt-brand {
+      font-weight: 800;
+      font-size: 18px;
+      color: #6366f1;
+    }
+
+    .receipt-tx-id {
+      font-family: monospace;
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .receipt-items {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px dashed #cbd5e1;
+      padding-bottom: 12px;
+    }
+
+    .receipt-item-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .receipt-total-row {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 14px;
+      color: #0f172a;
+    }
+
+    .qr-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      border: 1px solid #e2e8f0;
+    }
+
+    #qrcode-canvas {
+      width: 160px;
+      height: 160px;
+    }
+
+    .qr-instructions {
+      font-size: 11px;
+      color: #64748b;
+      text-align: center;
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+
+    /* Verification Status Banner */
+    .status-banner {
+      width: 100%;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      padding: 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-banner.approved {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    .pulse-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--warning-color);
+      box-shadow: 0 0 8px var(--warning-color);
+      animation: pulse-yellow 1.5s infinite;
+      flex-shrink: 0;
+    }
+
+    .status-banner.approved .pulse-indicator {
+      background-color: var(--success-color);
+      box-shadow: 0 0 8px var(--success-color);
+      animation: pulse-green 1.5s infinite;
+    }
+
+    @keyframes pulse-yellow {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.6; }
+    }
+
+    @keyframes pulse-green {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.6; }
+    }
+
+    .status-text-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .status-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .status-desc {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    /* Gate open screen */
+    .gate-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #090d16;
+      background-image: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+      z-index: 300;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .gate-overlay.active {
+      display: flex;
+    }
+
+    .gate-success-icon {
+      width: 72px;
+      height: 72px;
+      background: var(--success-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: white;
+      margin-bottom: 20px;
+      box-shadow: var(--success-glow);
+      animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0); }
+      100% { transform: scale(1); }
+    }
+
+    .gate-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #34d399;
+      margin-bottom: 8px;
+    }
+
+    .gate-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 30px;
+    }
+
+    .new-session-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .new-session-btn:hover {
+      background: var(--bg-input);
+    }
+
+    /* Bottom Navigation Tab Bar */
+    .tab-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      height: 64px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      width: 60px;
+      position: relative;
+    }
+
+    .tab-btn.active {
+      color: var(--accent-color);
+    }
+
+    .tab-icon {
+      font-size: 20px;
+    }
+
+    .badge {
+      position: absolute;
+      top: -4px;
+      right: 10px;
+      background: var(--accent-color);
+      color: white;
+      font-size: 9px;
+      font-weight: 700;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: bounce 0.3s ease;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    .toast {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(99, 102, 241, 0.9);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 150;
+      backdrop-filter: blur(8px);
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="app-title">
+      <div class="app-logo">S</div>
+      <span>SmartScan Shopper</span>
+    </div>
+    <div class="header-badge" id="header-status">Store Terminal 01</div>
+  </header>
+
+  <!-- App Content Views -->
+  <main class="app-content">
+    
+    <!-- Browse/Catalog View -->
+    <div class="catalog-section" id="catalog-view">
+      <h2>Scan Items (Tap to scan)</h2>
+      <div class="products-grid" id="products-container">
+        <!-- Products will load dynamically -->
+      </div>
+    </div>
+
+    <!-- Scanner View -->
+    <div class="scan-section" id="scan-view">
+      <h2>Camera Scanner Simulation</h2>
+      <div class="scanner-container">
+        <div class="scanner-viewfinder">
+          <div class="viewfinder-bracket top-left"></div>
+          <div class="viewfinder-bracket top-right"></div>
+          <div class="viewfinder-bracket bottom-left"></div>
+          <div class="viewfinder-bracket bottom-right"></div>
+          <div class="scanner-laser"></div>
+          <div class="scanner-target-display" id="scanner-target-display">
+            <span class="pulse-text">Aim camera at barcode</span>
+          </div>
+        </div>
+        
+        <div class="scanner-controls">
+          <label for="scanner-select">Align product under scanner:</label>
+          <div class="scanner-select-row">
+            <select id="scanner-select">
+              <option value="">-- Choose item to scan --</option>
+            </select>
+            <button class="scanner-action-btn" id="scanner-btn">Scan Code</button>
+          </div>
+          
+          <div class="quick-scan-container">
+            <label>Quick Align Items:</label>
+            <div class="quick-scan-list" id="quick-scan-list">
+              <!-- Quick align elements loaded dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cart View -->
+    <div class="cart-section" id="cart-view">
+      <h2>Shopping Cart</h2>
+      <div class="cart-empty" id="cart-empty-view">
+        <div class="cart-empty-icon">🛒</div>
+        <p>Your cart is empty.<br>Scan products in the Browse or Scan tab.</p>
+      </div>
+      
+      <div class="cart-list" id="cart-list-container">
+        <!-- Cart Items -->
+      </div>
+
+      <div class="summary-card" id="cart-summary" style="display: none;">
+        <div class="summary-row">
+          <span>Items Total</span>
+          <span id="items-total-qty">0 items</span>
+        </div>
+        <div class="summary-row summary-total">
+          <span>Grand Total</span>
+          <span id="items-total-price">₹0</span>
+        </div>
+        <button class="pay-button" id="pay-btn">
+          <span>💳 Pay via UPI</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Receipt View -->
+    <div class="receipt-section" id="receipt-view">
+      <div class="status-banner" id="gate-status-banner">
+        <div class="pulse-indicator"></div>
+        <div class="status-text-container">
+          <div class="status-title" id="gate-status-title">Gate Locked</div>
+          <div class="status-desc" id="gate-status-desc">Awaiting Auditor Approval...</div>
+        </div>
+      </div>
+
+      <div class="receipt-card">
+        <div class="receipt-header">
+          <div class="receipt-brand">SMARTSCAN GO</div>
+          <div class="receipt-tx-id" id="receipt-txid">TX-XXXXXXXX</div>
+        </div>
+        <div class="receipt-items" id="receipt-items-container">
+          <!-- Items will render here -->
+        </div>
+        <div class="receipt-total-row">
+          <span>Amount Paid</span>
+          <span id="receipt-total-price">₹0</span>
+        </div>
+        <div class="qr-container">
+          <canvas id="qrcode-canvas"></canvas>
+          <div class="qr-instructions">
+            Scan this receipt QR code at the physical audit desk before exit.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation Tab Bar -->
+  <nav class="tab-bar" id="app-tab-bar">
+    <button class="tab-btn active" id="tab-browse-btn" onclick="switchTab('browse')">
+      <span class="tab-icon">🛍️</span>
+      <span>Browse</span>
+    </button>
+    <button class="tab-btn" id="tab-scan-btn" onclick="switchTab('scan')">
+      <span class="tab-icon">📷</span>
+      <span>Scan</span>
+    </button>
+    <button class="tab-btn" id="tab-cart-btn" onclick="switchTab('cart')">
+      <span class="tab-icon">🛒</span>
+      <span>Cart</span>
+      <span class="badge" id="cart-badge" style="display: none;">0</span>
+    </button>
+    <button class="tab-btn" id="tab-receipt-btn" onclick="switchTab('receipt')" disabled>
+      <span class="tab-icon">📄</span>
+      <span>Receipt</span>
+    </button>
+  </nav>
+
+  <!-- Loading Animation Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <div style="font-weight: 600; font-size: 14px;">Simulating UPI Checkout...</div>
+    <div style="color: var(--text-muted); font-size: 11px;">Authorizing bank payment</div>
+  </div>
+
+  <!-- Exit Gate Celebration Overlay -->
+  <div class="gate-overlay" id="gate-overlay">
+    <div class="gate-success-icon">🔓</div>
+    <h2 class="gate-title">Exit Approved!</h2>
+    <p class="gate-desc">Gate is unlocked. Thank you for shopping with us!</p>
+    <button class="new-session-btn" id="new-session-btn">Start New Shop</button>
+  </div>
+
+  <div class="toast" id="toast">Scanned item!</div>
+
+  <script>
+    // Web Audio Setup
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playBeep() {
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, audioCtx.currentTime); // High pitch beep
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+      } catch (err) {
+        console.error('Audio error:', err);
+      }
+    }
+
+    function playChime() {
+      try {
+        initAudio();
+        const now = audioCtx.currentTime;
+        const playNote = (freq, startOffset, duration) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + startOffset);
+          gain.gain.setValueAtTime(0.1, now + startOffset);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + startOffset + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + startOffset);
+          osc.stop(now + startOffset + duration);
+        };
+        // Joyful chord (C5 - E5 - G5 - C6)
+        playNote(523.25, 0, 0.15);      // C5
+        playNote(659.25, 0.10, 0.15);   // E5
+        playNote(783.99, 0.20, 0.15);   // G5
+        playNote(1046.50, 0.30, 0.40);  // C6
+      } catch (err) {
+        console.error('Audio error:', err);
+      }
+    }
+
+    // State Variables
+    let products = [];
+    let cart = [];
+    let transaction = null;
+    let pollInterval = null;
+    let currentTab = 'browse';
+    let alignmentTimeout = null;
+
+    const iconMap = {
+      'noodles': '🍜',
+      'almonds': '🥜',
+      'chocolate': '🍫',
+      'oil': '🛢️',
+      'apples': '🍎',
+      'honey': '🍯',
+      'soda': '🥤',
+      'toothpaste': '🪥'
+    };
+
+    const gradientMap = {
+      'noodles': 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+      'almonds': 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+      'chocolate': 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
+      'oil': 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%)',
+      'apples': 'linear-gradient(135deg, #ff0844 0%, #ffb199 100%)',
+      'honey': 'linear-gradient(135deg, #f12711 0%, #f5af19 100%)',
+      'soda': 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
+      'toothpaste': 'linear-gradient(135deg, #a6c0fe 0%, #f1eefc 100%)'
+    };
+
+    // Load products from local server API
+    async function loadCatalog() {
+      try {
+        const response = await fetch('/api/products');
+        products = await response.json();
+        renderCatalog();
+        renderScannerOptions();
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    }
+
+    function renderCatalog() {
+      const container = document.getElementById('products-container');
+      container.innerHTML = '';
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.onclick = () => addToCart(p);
+
+        const emoji = iconMap[p.image_url] || '📦';
+        const gradient = gradientMap[p.image_url] || 'linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%)';
+
+        card.innerHTML = `
+          <div class="product-image-placeholder" style="background: ${gradient}">
+            ${emoji}
+          </div>
+          <div class="product-info">
+            <span class="product-name">${p.name}</span>
+            <span class="product-category">${p.category}</span>
+          </div>
+          <div class="product-price-row">
+            <span class="product-price">₹${p.price}</span>
+            <button class="add-button">+</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderScannerOptions() {
+      const select = document.getElementById('scanner-select');
+      const quickList = document.getElementById('quick-scan-list');
+
+      select.innerHTML = '<option value="">-- Choose item to scan --</option>';
+      quickList.innerHTML = '';
+
+      products.forEach(p => {
+        // Dropdown option
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = `${p.name} (₹${p.price})`;
+        select.appendChild(opt);
+
+        // Quick scan item
+        const emoji = iconMap[p.image_url] || '📦';
+        const qBtn = document.createElement('div');
+        qBtn.className = 'quick-scan-item';
+        qBtn.innerHTML = `<span>${emoji}</span><span>${p.name}</span>`;
+        qBtn.onclick = () => {
+          select.value = p.id;
+          triggerAlignProduct(p);
+        };
+        quickList.appendChild(qBtn);
+      });
+    }
+
+    function triggerAlignProduct(product) {
+      initAudio();
+      if (alignmentTimeout) clearTimeout(alignmentTimeout);
+
+      const targetDisplay = document.getElementById('scanner-target-display');
+      const emoji = iconMap[product.image_url] || '📦';
+
+      targetDisplay.innerHTML = `
+        <div class="target-emoji">${emoji}</div>
+        <div style="font-weight: 600; font-size: 13px; color: #f1f5f9;">${product.name} in view</div>
+        <div class="pulse-text" style="color: #818cf8; margin-top: 4px;">Analyzing barcode...</div>
+      `;
+
+      // Auto scan after 1.2s to simulate real camera focus scanning
+      alignmentTimeout = setTimeout(() => {
+        addToCart(product);
+        targetDisplay.innerHTML = `
+          <div class="target-emoji" style="animation: none; transform: scale(1.1); color: var(--success-color)">✓</div>
+          <div style="font-weight: 700; font-size: 14px; color: var(--success-color);">Success!</div>
+          <div style="font-size: 11px; color: var(--text-muted)">${product.name} added to cart</div>
+        `;
+        
+        // Reset display after 1.5 seconds
+        alignmentTimeout = setTimeout(() => {
+          targetDisplay.innerHTML = `<span class="pulse-text">Aim camera at barcode</span>`;
+          document.getElementById('scanner-select').value = '';
+        }, 1500);
+
+      }, 1200);
+    }
+
+    // Manual scan button trigger
+    document.getElementById('scanner-btn').onclick = () => {
+      const id = document.getElementById('scanner-select').value;
+      if (!id) return;
+      const product = products.find(p => p.id == id);
+      if (product) {
+        triggerAlignProduct(product);
+      }
+    };
+
+    // Auto-align when product is selected in dropdown
+    document.getElementById('scanner-select').onchange = (e) => {
+      const id = e.target.value;
+      if (!id) return;
+      const product = products.find(p => p.id == id);
+      if (product) {
+        triggerAlignProduct(product);
+      }
+    };
+
+    function addToCart(product) {
+      playBeep();
+      const existing = cart.find(item => item.id === product.id);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+      updateCartUI();
+      showToast(`Scanned: ${product.name}`);
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      toast.innerText = text;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 1500);
+    }
+
+    function updateCartUI() {
+      const container = document.getElementById('cart-list-container');
+      const emptyView = document.getElementById('cart-empty-view');
+      const summaryCard = document.getElementById('cart-summary');
+      const badge = document.getElementById('cart-badge');
+
+      if (cart.length === 0) {
+        container.innerHTML = '';
+        emptyView.style.display = 'flex';
+        summaryCard.style.display = 'none';
+        badge.style.display = 'none';
+        return;
+      }
+
+      emptyView.style.display = 'none';
+      summaryCard.style.display = 'flex';
+      container.innerHTML = '';
+
+      let totalQty = 0;
+      let totalPrice = 0;
+
+      cart.forEach(item => {
+        totalQty += item.quantity;
+        totalPrice += item.price * item.quantity;
+
+        const emoji = iconMap[item.image_url] || '📦';
+        const card = document.createElement('div');
+        card.className = 'cart-item';
+        card.innerHTML = `
+          <div class="cart-item-emoji">${emoji}</div>
+          <div class="cart-item-details">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-price">₹${item.price}</div>
+          </div>
+          <div class="cart-item-actions">
+            <button class="qty-btn" onclick="changeQuantity(${item.id}, -1)">&minus;</button>
+            <span class="qty-val">${item.quantity}</span>
+            <button class="qty-btn" onclick="changeQuantity(${item.id}, 1)">&plus;</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      badge.innerText = totalQty;
+      badge.style.display = 'flex';
+
+      document.getElementById('items-total-qty').innerText = `${totalQty} item(s)`;
+      document.getElementById('items-total-price').innerText = `₹${totalPrice}`;
+    }
+
+    function changeQuantity(id, delta) {
+      const item = cart.find(item => item.id === id);
+      if (item) {
+        item.quantity += delta;
+        if (item.quantity <= 0) {
+          cart = cart.filter(x => x.id !== id);
+        }
+        updateCartUI();
+      }
+    }
+
+    function switchTab(tabId) {
+      if (tabId === 'receipt' && !transaction) return;
+
+      currentTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('catalog-view').style.display = tabId === 'browse' ? 'block' : 'none';
+      document.getElementById('scan-view').style.display = tabId === 'scan' ? 'flex' : 'none';
+      document.getElementById('cart-view').style.display = tabId === 'cart' ? 'flex' : 'none';
+      document.getElementById('receipt-view').style.display = tabId === 'receipt' ? 'flex' : 'none';
+
+      if (tabId === 'browse') document.getElementById('tab-browse-btn').classList.add('active');
+      if (tabId === 'scan') document.getElementById('tab-scan-btn').classList.add('active');
+      if (tabId === 'cart') document.getElementById('tab-cart-btn').classList.add('active');
+      if (tabId === 'receipt') document.getElementById('tab-receipt-btn').classList.add('active');
+    }
+
+    // Checkout execution
+    document.getElementById('pay-btn').onclick = async () => {
+      if (cart.length === 0) return;
+      initAudio();
+
+      const overlay = document.getElementById('loading-overlay');
+      overlay.classList.add('active');
+
+      try {
+        const response = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cart })
+        });
+
+        if (!response.ok) {
+          throw new Error('Checkout failed');
+        }
+
+        transaction = await response.json();
+
+        // Simulate banking authorization delay for beautiful look and feel
+        setTimeout(() => {
+          overlay.classList.remove('active');
+          renderReceipt();
+          document.getElementById('tab-receipt-btn').removeAttribute('disabled');
+          switchTab('receipt');
+          startPollingStatus();
+        }, 1500);
+
+      } catch (err) {
+        overlay.classList.remove('active');
+        alert('Payment failed, please try again.');
+        console.error(err);
+      }
+    };
+
+    function renderReceipt() {
+      document.getElementById('receipt-txid').innerText = transaction.transactionId;
+      document.getElementById('receipt-total-price').innerText = `₹${transaction.total}`;
+
+      const container = document.getElementById('receipt-items-container');
+      container.innerHTML = '';
+
+      transaction.cart.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'receipt-item-row';
+        row.innerHTML = `
+          <span>${item.name} x ${item.quantity}</span>
+          <span>₹${item.price * item.quantity}</span>
+        `;
+        container.appendChild(row);
+      });
+
+      // Render QR code
+      const canvas = document.getElementById('qrcode-canvas');
+      QRCode.toCanvas(canvas, transaction.qrToken, {
+        width: 160,
+        margin: 2,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff'
+        }
+      }, function (error) {
+        if (error) console.error(error);
+      });
+
+      // Reset gate banner state
+      const banner = document.getElementById('gate-status-banner');
+      banner.classList.remove('approved');
+      document.getElementById('gate-status-title').innerText = 'Gate Locked';
+      document.getElementById('gate-status-desc').innerText = 'Awaiting Auditor Approval...';
+    }
+
+    function startPollingStatus() {
+      if (pollInterval) clearInterval(pollInterval);
+
+      pollInterval = setInterval(async () => {
+        if (!transaction) return;
+        try {
+          const response = await fetch(`/api/checkout/${transaction.transactionId}/status`);
+          const data = await response.json();
+          if (data.status === 'COMPLETED') {
+            clearInterval(pollInterval);
+            pollInterval = null;
+            triggerGateUnlock();
+          }
+        } catch (error) {
+          console.error('Polling error:', error);
+        }
+      }, 1500);
+    }
+
+    function triggerGateUnlock() {
+      playChime();
+      
+      // Update receipt banner
+      const banner = document.getElementById('gate-status-banner');
+      banner.classList.add('approved');
+      document.getElementById('gate-status-title').innerText = 'Exit Approved';
+      document.getElementById('gate-status-desc').innerText = 'Gate Unlocked - Move forward';
+
+      // Show celebration screen
+      setTimeout(() => {
+        document.getElementById('gate-overlay').classList.add('active');
+      }, 1000);
+    }
+
+    // Start a fresh shopping session
+    document.getElementById('new-session-btn').onclick = () => {
+      document.getElementById('gate-overlay').classList.remove('active');
+      cart = [];
+      transaction = null;
+      document.getElementById('tab-receipt-btn').setAttribute('disabled', 'true');
+      updateCartUI();
+      switchTab('browse');
+    };
+
+    // Load initial page content
+    window.onload = () => {
+      loadCatalog();
+    };
+  </script>
+</body>
+</html>

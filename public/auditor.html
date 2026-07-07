@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartScan Go - Store Auditor Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --bg-card: #151a2d;
+      --bg-input: #1e253c;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-color: #6366f1;
+      --accent-glow: 0 0 15px rgba(99, 102, 241, 0.3);
+      --success-color: #10b981;
+      --success-glow: 0 0 15px rgba(16, 185, 129, 0.3);
+      --danger-color: #ef4444;
+      --text-main: #f1f5f9;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header styling */
+    .app-header {
+      padding: 16px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .app-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .app-logo {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 12px;
+      color: white;
+    }
+
+    .header-badge {
+      font-size: 10px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    /* Main viewport */
+    .app-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Section box styling */
+    .control-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .control-box h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Form Fields */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    select, input {
+      background-color: var(--bg-input);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--accent-color);
+      box-shadow: var(--accent-glow);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-row input {
+      flex: 1;
+    }
+
+    .action-btn {
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .action-btn:hover {
+      background: #4f46e5;
+    }
+
+    /* Audit Panel details */
+    .audit-details {
+      display: none; /* Shown dynamically */
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .audit-details.active {
+      display: flex;
+    }
+
+    .tx-meta-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .meta-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .meta-value {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* Checklist */
+    .audit-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .checklist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .audit-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .audit-card.checked {
+      background: rgba(16, 185, 129, 0.06);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .audit-card-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .checkbox-mock {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--text-muted);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: white;
+      transition: background 0.2s, border-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .audit-card.checked .checkbox-mock {
+      background: var(--success-color);
+      border-color: var(--success-color);
+    }
+
+    .audit-card-name {
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .audit-card.checked .audit-card-name {
+      color: #34d399;
+      text-decoration: line-through;
+      opacity: 0.8;
+    }
+
+    .audit-card-qty {
+      background: var(--bg-input);
+      color: var(--text-main);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border-color);
+    }
+
+    .audit-card.checked .audit-card-qty {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    /* Approve exit button */
+    .approve-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.5;
+      pointer-events: none;
+      transition: opacity 0.3s, transform 0.2s, box-shadow 0.2s;
+    }
+
+    .approve-btn.active {
+      opacity: 1;
+      pointer-events: auto;
+      box-shadow: var(--success-glow);
+    }
+
+    .approve-btn.active:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    }
+
+    .approve-btn.active:active {
+      transform: translateY(1px);
+    }
+
+    /* Success overlay */
+    .success-overlay {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(11, 15, 25, 0.95);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .success-overlay.active {
+      display: flex;
+    }
+
+    .success-icon {
+      width: 54px;
+      height: 54px;
+      background: var(--success-color);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+      box-shadow: var(--success-glow);
+    }
+
+    /* Helper badge style for status indicator */
+    .badge-status {
+      font-family: monospace;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: bold;
+    }
+
+    .badge-paid {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-completed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .error-text {
+      color: var(--danger-color);
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="app-title">
+      <div class="app-logo">A</div>
+      <span>SmartScan Auditor</span>
+    </div>
+    <div class="header-badge">Terminal 01-A</div>
+  </header>
+
+  <!-- App Main Content -->
+  <main class="app-content">
+
+    <!-- Active receipts lookup -->
+    <div class="control-box">
+      <h2>Scan / Select Receipt</h2>
+      
+      <!-- Dropdown select -->
+      <div class="form-group">
+        <label for="tx-select">Select Active Paid Receipt</label>
+        <select id="tx-select">
+          <option value="">-- Waiting for transactions --</option>
+        </select>
+      </div>
+
+      <!-- Manual barcode scanning simulation -->
+      <div class="form-group">
+        <label for="qr-input">Or Paste Secure Receipt QR Code Token</label>
+        <div class="input-row">
+          <input type="text" id="qr-input" placeholder="Paste TX-xxxxxxxx:signature..." autocomplete="off">
+          <button class="action-btn" id="lookup-btn">Look Up</button>
+        </div>
+        <div class="error-text" id="error-message">Invalid QR Token signature.</div>
+      </div>
+    </div>
+
+    <!-- Dynamic verification form -->
+    <div class="audit-details" id="audit-details-panel">
+      
+      <div class="tx-meta-info">
+        <div class="meta-item">
+          <span class="meta-label">Transaction ID</span>
+          <span class="meta-value" id="audit-txid">TX-XXXXXXXX</span>
+        </div>
+        <div class="meta-item" style="align-items: flex-end;">
+          <span class="meta-label">Total Amount</span>
+          <span class="meta-value" id="audit-total" style="color: #34d399;">₹0</span>
+        </div>
+      </div>
+
+      <div class="control-box">
+        <div class="checklist-header">
+          <span>Physical Audit Checklist (Highlighting 3 items)</span>
+          <span id="checklist-progress">0/0 Verified</span>
+        </div>
+        
+        <!-- Checklist cards -->
+        <div class="audit-checklist" id="checklist-container">
+          <!-- Populated dynamically -->
+        </div>
+
+        <button class="approve-btn" id="approve-btn">
+          <span>✔️ Approve Exit & Unlock Gate</span>
+        </button>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Audit complete success screen -->
+  <div class="success-overlay" id="success-overlay">
+    <div class="success-icon">✓</div>
+    <h2 style="color: #34d399; font-size: 18px;">Verification Complete!</h2>
+    <p style="color: var(--text-muted); font-size: 13px;">Exit has been authorized.<br>The gate has been unlocked for shopper.</p>
+    <button class="action-btn" style="margin-top: 10px;" onclick="resetAuditor()">Ready Next Audit</button>
+  </div>
+
+  <script>
+    // State variables
+    let currentTx = null;
+    let selectedChecks = {};
+    let dropdownPollInterval = null;
+
+    // Load active paid receipts into the dropdown select options
+    async function pollActiveTransactions() {
+      try {
+        const response = await fetch('/api/active-transactions');
+        const transactions = await response.json();
+        renderDropdown(transactions);
+      } catch (err) {
+        console.error('Error fetching transactions list:', err);
+      }
+    }
+
+    function renderDropdown(transactions) {
+      const select = document.getElementById('tx-select');
+      const currentValue = select.value;
+      
+      select.innerHTML = '<option value="">-- Select Active Paid Receipt --</option>';
+      
+      if (transactions.length === 0) {
+        select.innerHTML = '<option value="">-- No active receipts pending audit --</option>';
+        return;
+      }
+
+      transactions.forEach(tx => {
+        const option = document.createElement('option');
+        option.value = tx.qr_token;
+        option.innerText = `${tx.id} (Total: ₹${tx.total_price})`;
+        select.appendChild(option);
+      });
+
+      // Maintain selection if it still exists in active list
+      if (currentValue && transactions.find(t => t.qr_token === currentValue)) {
+        select.value = currentValue;
+      }
+    }
+
+    // Auto load transaction details when dropdown selection changes
+    document.getElementById('tx-select').onchange = (e) => {
+      const qrToken = e.target.value;
+      document.getElementById('qr-input').value = qrToken;
+      if (qrToken) {
+        loadAuditDetails(qrToken);
+      } else {
+        clearAuditDetails();
+      }
+    };
+
+    // Lookup handler for the manual QR code button
+    document.getElementById('lookup-btn').onclick = () => {
+      const qrToken = document.getElementById('qr-input').value.trim();
+      if (qrToken) {
+        loadAuditDetails(qrToken);
+      }
+    };
+
+    async function loadAuditDetails(qrToken) {
+      const errorMsg = document.getElementById('error-message');
+      errorMsg.style.display = 'none';
+
+      try {
+        const response = await fetch(`/api/audit/${encodeURIComponent(qrToken)}`);
+        if (!response.ok) {
+          throw new Error('Transaction details look up failed.');
+        }
+
+        currentTx = await response.json();
+        renderAuditChecklist();
+        
+      } catch (error) {
+        console.error('Lookup error:', error);
+        errorMsg.style.display = 'block';
+        clearAuditDetails();
+      }
+    }
+
+    function clearAuditDetails() {
+      currentTx = null;
+      selectedChecks = {};
+      document.getElementById('audit-details-panel').classList.remove('active');
+    }
+
+    function renderAuditChecklist() {
+      document.getElementById('audit-txid').innerText = currentTx.transactionId;
+      document.getElementById('audit-total').innerText = `₹${currentTx.total}`;
+
+      const container = document.getElementById('checklist-container');
+      container.innerHTML = '';
+      selectedChecks = {};
+
+      const auditedItems = currentTx.auditedItems;
+
+      auditedItems.forEach(item => {
+        selectedChecks[item.id] = false;
+
+        const card = document.createElement('div');
+        card.className = 'audit-card';
+        card.id = `audit-item-${item.id}`;
+        card.onclick = () => toggleCheck(item.id);
+
+        card.innerHTML = `
+          <div class="audit-card-left">
+            <div class="checkbox-mock" id="check-box-${item.id}"></div>
+            <span class="audit-card-name">${item.name}</span>
+          </div>
+          <span class="audit-card-qty">${item.quantity} Unit(s)</span>
+        `;
+        container.appendChild(card);
+      });
+
+      updateProgress();
+      document.getElementById('audit-details-panel').classList.add('active');
+    }
+
+    function toggleCheck(itemId) {
+      selectedChecks[itemId] = !selectedChecks[itemId];
+      
+      const card = document.getElementById(`audit-item-${itemId}`);
+      const checkbox = document.getElementById(`check-box-${itemId}`);
+
+      if (selectedChecks[itemId]) {
+        card.classList.add('checked');
+        checkbox.innerHTML = '✓';
+      } else {
+        card.classList.remove('checked');
+        checkbox.innerHTML = '';
+      }
+
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const keys = Object.keys(selectedChecks);
+      const total = keys.length;
+      const checkedCount = keys.filter(k => selectedChecks[k]).length;
+
+      document.getElementById('checklist-progress').innerText = `${checkedCount}/${total} Verified`;
+
+      const btn = document.getElementById('approve-btn');
+      if (checkedCount === total && total > 0) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    }
+
+    // Approve handler to authorize gate open
+    document.getElementById('approve-btn').onclick = async () => {
+      if (!currentTx) return;
+
+      try {
+        const response = await fetch(`/api/audit/${currentTx.transactionId}/approve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error('Approval request failed');
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          document.getElementById('success-overlay').classList.add('active');
+          pollActiveTransactions();
+        }
+
+      } catch (error) {
+        alert('Could not approve checkout receipt verification.');
+        console.error(error);
+      }
+    };
+
+    function resetAuditor() {
+      document.getElementById('success-overlay').classList.remove('active');
+      document.getElementById('qr-input').value = '';
+      document.getElementById('tx-select').value = '';
+      clearAuditDetails();
+    }
+
+    // Initialization
+    window.onload = () => {
+      pollActiveTransactions();
+      dropdownPollInterval = setInterval(pollActiveTransactions, 2000);
+    };
+  </script>
+</body>
+</html>
