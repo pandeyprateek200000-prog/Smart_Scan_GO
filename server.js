@@ -10,6 +10,23 @@ const SECRET_KEY = crypto.randomBytes(32).toString('hex');
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Page Routing Endpoints
+app.get('/shopper', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'shopper.html'));
+});
+
+app.get('/auditor', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'auditor.html'));
+});
+
+app.get('/control', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/', (req, res) => {
+  res.redirect('/shopper');
+});
+
 // Initialize SQLite database using the native Node.js sqlite module
 const db = new DatabaseSync('smartscan.db');
 

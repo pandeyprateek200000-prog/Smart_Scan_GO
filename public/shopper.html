@@ -901,9 +901,338 @@
     .toast.show {
       opacity: 1;
     }
+
+    /* Razorpay Modal Overlay */
+    .razorpay-modal {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .razorpay-modal.active {
+      display: flex;
+    }
+
+    .razorpay-box {
+      background: #ffffff;
+      width: 100%;
+      max-width: 330px;
+      border-radius: 12px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      color: #1e293b;
+      animation: rp-pop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes rp-pop {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .razorpay-header {
+      background: #0b1528;
+      color: #ffffff;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .rp-brand {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #3395ff;
+    }
+
+    .rp-merchant {
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-top: 2px;
+    }
+
+    .rp-amount-container {
+      text-align: right;
+    }
+
+    .rp-amount {
+      font-size: 16px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .rp-test-badge {
+      font-size: 8px;
+      background: #ef4444;
+      color: white;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-weight: 800;
+      margin-top: 2px;
+      text-align: center;
+      width: fit-content;
+      margin-left: auto;
+    }
+
+    .rp-body {
+      padding: 16px;
+      flex: 1;
+      background: #f8fafc;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .rp-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rp-method-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .rp-method-item:hover {
+      border-color: #3395ff;
+      background: #f1f7ff;
+    }
+
+    .rp-method-icon {
+      font-size: 20px;
+    }
+
+    .rp-method-text {
+      flex: 1;
+    }
+
+    .rp-method-title {
+      font-size: 13px;
+      font-weight: 700;
+      display: block;
+      color: #0f172a;
+    }
+
+    .rp-method-desc {
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .rp-arrow {
+      font-size: 14px;
+      color: #cbd5e1;
+    }
+
+    .rp-panel h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+
+    .rp-pay-btn {
+      background: #3395ff;
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 16px;
+      box-shadow: 0 4px 10px rgba(51, 149, 255, 0.2);
+    }
+
+    .rp-pay-btn:hover {
+      background: #1d7bdf;
+    }
+
+    .rp-back-btn {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      width: 100%;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .rp-back-btn:hover {
+      color: #334155;
+    }
+
+    .rp-btn-success {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .rp-btn-failure {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .rp-footer {
+      background: #f1f5f9;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9px;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
+
+  <!-- Razorpay Modal Container -->
+  <div class="razorpay-modal" id="razorpay-modal">
+    <div class="razorpay-box">
+      <div class="razorpay-header">
+        <div class="rp-header-left">
+          <div class="rp-brand">Razorpay</div>
+          <div class="rp-merchant">SmartScan Go Store</div>
+        </div>
+        <div class="rp-amount-container">
+          <div class="rp-amount" id="rp-modal-amount">₹0.00</div>
+          <div class="rp-test-badge">TEST MODE</div>
+        </div>
+      </div>
+      
+      <div class="rp-body">
+        <!-- List of options -->
+        <div class="rp-methods" id="rp-methods-list">
+          <div class="rp-method-item" onclick="selectRpMethod('upi')">
+            <span class="rp-method-icon">📱</span>
+            <div class="rp-method-text">
+              <span class="rp-method-title">UPI / QR</span>
+              <span class="rp-method-desc">Google Pay, PhonePe, Paytm</span>
+            </div>
+            <span class="rp-arrow">›</span>
+          </div>
+          <div class="rp-method-item" onclick="selectRpMethod('card')">
+            <span class="rp-method-icon">💳</span>
+            <div class="rp-method-text">
+              <span class="rp-method-title">Card</span>
+              <span class="rp-method-desc">Visa, Mastercard, RuPay, Maestro</span>
+            </div>
+            <span class="rp-arrow">›</span>
+          </div>
+          <div class="rp-method-item" onclick="selectRpMethod('netbanking')">
+            <span class="rp-method-icon">🏛️</span>
+            <div class="rp-method-text">
+              <span class="rp-method-title">Netbanking</span>
+              <span class="rp-method-desc">All Indian banks available</span>
+            </div>
+            <span class="rp-arrow">›</span>
+          </div>
+        </div>
+
+        <!-- UPI specific panel -->
+        <div class="rp-panel" id="rp-upi-panel" style="display:none;">
+          <h3>Pay using UPI</h3>
+          <div class="form-group" style="margin-top: 10px; display:flex; flex-direction:column; gap:4px;">
+            <label style="font-size:10px; color:#64748b; font-weight:600;">ENTER UPI ID</label>
+            <input type="text" id="rp-upi-id" placeholder="Enter UPI ID (e.g. mobile@upi)" value="shopper@paytm" style="background:#f1f5f9; color:#0f172a; border: 1px solid #cbd5e1; outline:none; padding:8px; border-radius:6px; font-family:inherit;">
+          </div>
+          <button class="rp-pay-btn" onclick="submitRpPayment()">Pay Now</button>
+          <button class="rp-back-btn" onclick="showRpMethods()">← Back to options</button>
+        </div>
+
+        <!-- Card specific panel -->
+        <div class="rp-panel" id="rp-card-panel" style="display:none;">
+          <h3>Pay using Card</h3>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+            <input type="text" placeholder="Card Number" value="4111 1111 1111 1111" style="background:#f1f5f9; color:#0f172a; border: 1px solid #cbd5e1; outline:none; padding:8px; border-radius:6px; font-family:inherit;">
+            <div style="display:flex; gap:8px;">
+              <input type="text" placeholder="Expiry (MM/YY)" value="12/29" style="background:#f1f5f9; color:#0f172a; border: 1px solid #cbd5e1; outline:none; padding:8px; border-radius:6px; font-family:inherit; flex:1;">
+              <input type="text" placeholder="CVV" value="123" style="background:#f1f5f9; color:#0f172a; border: 1px solid #cbd5e1; outline:none; padding:8px; border-radius:6px; font-family:inherit; width: 80px;">
+            </div>
+          </div>
+          <button class="rp-pay-btn" onclick="submitRpPayment()">Pay Now</button>
+          <button class="rp-back-btn" onclick="showRpMethods()">← Back to options</button>
+        </div>
+
+        <!-- Netbanking specific panel -->
+        <div class="rp-panel" id="rp-netbanking-panel" style="display:none;">
+          <h3>Pay using Netbanking</h3>
+          <select id="rp-nb-select" style="margin-top:10px; width:100%; background:#f1f5f9; color:#0f172a; border: 1px solid #cbd5e1; outline:none; padding:8px; border-radius:6px; font-family:inherit;">
+            <option>SBI (State Bank of India)</option>
+            <option>HDFC Bank</option>
+            <option>ICICI Bank</option>
+            <option>Axis Bank</option>
+          </select>
+          <button class="rp-pay-btn" onclick="submitRpPayment()">Pay Now</button>
+          <button class="rp-back-btn" onclick="showRpMethods()">← Back to options</button>
+        </div>
+
+        <!-- Simulation Screen (Success / Failure) -->
+        <div class="rp-panel" id="rp-simulate-panel" style="display:none; text-align:center;">
+          <div class="spinner" style="margin: 20px auto; border-left-color: #3395FF; border-width:3px; width:30px; height:30px;"></div>
+          <h3 style="border:none; margin:0; padding:0;">Simulating Test Payment</h3>
+          <p style="font-size:11px; color:#64748b; margin-top:5px; line-height:1.4;">Select the transaction outcome. Choose **Simulate Success** to complete the shop checkout.</p>
+          <div style="display:flex; gap:10px; margin-top:20px; justify-content:center;">
+            <button class="rp-btn-success" onclick="completeRpPayment(true)">Simulate Success</button>
+            <button class="rp-btn-failure" onclick="completeRpPayment(false)">Simulate Failure</button>
+          </div>
+        </div>
+
+        <!-- Failed Screen -->
+        <div class="rp-panel" id="rp-failed-panel" style="display:none; text-align:center;">
+          <div style="font-size: 36px; margin-bottom:8px;">❌</div>
+          <h3 style="color:#ef4444; border:none; margin:0; padding:0;">Payment Failed</h3>
+          <p style="font-size:11px; color:#64748b; margin-top:5px;">The mock transaction was declined by the cardholder's bank.</p>
+          <button class="rp-pay-btn" style="background:#ef4444;" onclick="showRpMethods()">Try Again</button>
+          <button class="rp-back-btn" onclick="closeRpModal()">Cancel Checkout</button>
+        </div>
+      </div>
+      
+      <div class="rp-footer">
+        <span>🛡️ Secured by Razorpay</span>
+        <span>Test Mode</span>
+      </div>
+    </div>
+  </div>
 
   <!-- App Header -->
   <header class="app-header">
@@ -927,7 +1256,7 @@
 
     <!-- Scanner View -->
     <div class="scan-section" id="scan-view">
-      <h2>Camera Scanner Simulation</h2>
+      <h2>Camera Scanner</h2>
       <div class="scanner-container">
         <div class="scanner-viewfinder">
           <div class="viewfinder-bracket top-left"></div>
@@ -935,7 +1264,8 @@
           <div class="viewfinder-bracket bottom-left"></div>
           <div class="viewfinder-bracket bottom-right"></div>
           <div class="scanner-laser"></div>
-          <div class="scanner-target-display" id="scanner-target-display">
+          <video id="scanner-video" autoplay playsinline style="display: none; width: 100%; height: 100%; object-fit: cover; position: absolute; top:0; left:0; z-index:1; border-radius:12px;"></video>
+          <div class="scanner-target-display" id="scanner-target-display" style="position: relative; z-index: 5;">
             <span class="pulse-text">Aim camera at barcode</span>
           </div>
         </div>
@@ -1344,8 +1674,48 @@
       }
     }
 
+    let cameraStream = null;
+
+    async function startCamera() {
+      const video = document.getElementById('scanner-video');
+      const targetDisplay = document.getElementById('scanner-target-display');
+      
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+        cameraStream = stream;
+        video.srcObject = stream;
+        video.style.display = 'block';
+      } catch (err) {
+        console.error('Camera access error:', err);
+        video.style.display = 'none';
+      }
+    }
+
+    function stopCamera() {
+      if (cameraStream) {
+        try {
+          cameraStream.getTracks().forEach(track => track.stop());
+        } catch (e) {
+          console.error('Error stopping camera tracks:', e);
+        }
+        cameraStream = null;
+      }
+      const video = document.getElementById('scanner-video');
+      if (video) {
+        video.srcObject = null;
+        video.style.display = 'none';
+      }
+    }
+
     function switchTab(tabId) {
       if (tabId === 'receipt' && !transaction) return;
+
+      // Stop camera if leaving scan tab
+      if (currentTab === 'scan' && tabId !== 'scan') {
+        stopCamera();
+      }
 
       currentTab = tabId;
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -1355,15 +1725,61 @@
       document.getElementById('receipt-view').style.display = tabId === 'receipt' ? 'flex' : 'none';
 
       if (tabId === 'browse') document.getElementById('tab-browse-btn').classList.add('active');
-      if (tabId === 'scan') document.getElementById('tab-scan-btn').classList.add('active');
+      if (tabId === 'scan') {
+        document.getElementById('tab-scan-btn').classList.add('active');
+        startCamera();
+      }
       if (tabId === 'cart') document.getElementById('tab-cart-btn').classList.add('active');
       if (tabId === 'receipt') document.getElementById('tab-receipt-btn').classList.add('active');
     }
 
-    // Checkout execution
-    document.getElementById('pay-btn').onclick = async () => {
-      if (cart.length === 0) return;
-      initAudio();
+    // Razorpay Checkout Simulation
+    function openRpModal() {
+      let totalPrice = 0;
+      cart.forEach(item => {
+        totalPrice += item.price * item.quantity;
+      });
+
+      document.getElementById('rp-modal-amount').innerText = `₹${totalPrice.toFixed(2)}`;
+      document.getElementById('razorpay-modal').classList.add('active');
+      showRpMethods();
+    }
+
+    function closeRpModal() {
+      document.getElementById('razorpay-modal').classList.remove('active');
+    }
+
+    function showRpMethods() {
+      document.getElementById('rp-methods-list').style.display = 'flex';
+      document.getElementById('rp-upi-panel').style.display = 'none';
+      document.getElementById('rp-card-panel').style.display = 'none';
+      document.getElementById('rp-netbanking-panel').style.display = 'none';
+      document.getElementById('rp-simulate-panel').style.display = 'none';
+      document.getElementById('rp-failed-panel').style.display = 'none';
+    }
+
+    function selectRpMethod(method) {
+      document.getElementById('rp-methods-list').style.display = 'none';
+      if (method === 'upi') document.getElementById('rp-upi-panel').style.display = 'block';
+      if (method === 'card') document.getElementById('rp-card-panel').style.display = 'block';
+      if (method === 'netbanking') document.getElementById('rp-netbanking-panel').style.display = 'block';
+    }
+
+    function submitRpPayment() {
+      document.getElementById('rp-upi-panel').style.display = 'none';
+      document.getElementById('rp-card-panel').style.display = 'none';
+      document.getElementById('rp-netbanking-panel').style.display = 'none';
+      document.getElementById('rp-simulate-panel').style.display = 'block';
+    }
+
+    async function completeRpPayment(isSuccess) {
+      if (!isSuccess) {
+        document.getElementById('rp-simulate-panel').style.display = 'none';
+        document.getElementById('rp-failed-panel').style.display = 'block';
+        return;
+      }
+
+      closeRpModal();
 
       const overlay = document.getElementById('loading-overlay');
       overlay.classList.add('active');
@@ -1388,13 +1804,20 @@
           document.getElementById('tab-receipt-btn').removeAttribute('disabled');
           switchTab('receipt');
           startPollingStatus();
-        }, 1500);
+        }, 1200);
 
       } catch (err) {
         overlay.classList.remove('active');
         alert('Payment failed, please try again.');
         console.error(err);
       }
+    }
+
+    // Checkout execution (opens Razorpay)
+    document.getElementById('pay-btn').onclick = () => {
+      if (cart.length === 0) return;
+      initAudio();
+      openRpModal();
     };
 
     function renderReceipt() {
